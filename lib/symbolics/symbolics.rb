@@ -1,0 +1,6 @@
+require_relative('symbolic_value')
+require_relative('symbolic_integer')
+require_relative('symbolic_untyped')
+require_relative('symbolic_row')
+require_relative('symbolic_array')
+require_relative('symbolic_string')

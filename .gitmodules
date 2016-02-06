@@ -1,0 +1,3 @@
+[submodule "amb"]
+	path = amb
+	url = https://github.com/gowthamk/amb.git

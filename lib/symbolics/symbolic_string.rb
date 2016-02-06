@@ -1,0 +1,3 @@
+class SymbolicString < SymbolicValue
+
+end
