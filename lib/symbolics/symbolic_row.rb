@@ -7,9 +7,7 @@ class SymbolicRow < SymbolicValue
       sym_val
     end
   end
-  def name
-    @name
-  end
+
   def [](key)
     @values[key]
   end

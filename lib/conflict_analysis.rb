@@ -18,6 +18,15 @@ module ConflictAnalysis
   def self.meta_logger
     @@meta_logger
   end
+  def self.tracer=(tracer)
+    @@tracer = tracer
+  end
+  def self.tracer
+    @@tracer
+  end
+  def self.trace(*args)
+    self.tracer.trace(*args)
+  end
   def self.init(config)
     my_logger = Logger.new('log/experiments.log')
     my_logger.level= Logger::DEBUG
@@ -25,6 +34,7 @@ module ConflictAnalysis
     ActiveRecord::Base.establish_connection(config)
     self.meta_logger = Logger.new('log/meta.log')
     self.meta_logger.level = Logger::DEBUG
+    self.tracer = Tracer.new('log/trace')
     dbname = config["adapter"]
     self.amb= Class.new {include Amb}.new
     # Note: ConnectionHandling module is "extend"ed in
@@ -76,7 +86,7 @@ module ConflictAnalysis
       SymbolicNonEmptyString.new name #We assume that user-provided strings are non-empty.
     elsif cls <= Boolean #Boolean is not a core class.
       # if its boolean, we choose a real value.
-      self.amb.choose(true,false)
+      self.amb.choose(name,true,false)
     else
       SymbolicUntyped.new name
     end
@@ -89,7 +99,8 @@ module ConflictAnalysis
     column_types = arsym.instance_eval {|| @column_types}
     column_types.each do |attr,column|
       attr_name = "#{name.to_s}.#{attr}".to_sym
-      attr_sym_val = self.value_of_class attr_name, (class_of_type column.type)
+      sym_val_name = self.tracer.var_for attr_name
+      attr_sym_val = self.value_of_class sym_val_name, (class_of_type column.type)
       arsym.send("#{attr}=", attr_sym_val)
     end
     # Quick and dirty fix for `has_secure_password`.

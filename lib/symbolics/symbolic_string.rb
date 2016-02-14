@@ -1,7 +1,8 @@
 class SymbolicString < SymbolicEmptinessValue
 
   def length
-    SymbolicInteger.new "#{name}.length"
+    var = tracer.var_for "#{name}.length"
+    SymbolicInteger.new var
   end
 
   def to_s
@@ -9,11 +10,13 @@ class SymbolicString < SymbolicEmptinessValue
   end
 
   def =~(regex)
-    ConflictAnalysis.amb.choose(true,false)
+    var = tracer.var_for "#{name} =~ #{regex}"
+    amb.choose(var,true,false)
   end
 
   def !~(regex)
-    ConflictAnalysis.amb.choose(true,false)
+    var = tracer.var_for "#{name} !~ #{regex}"
+    amb.choose(var, true,false)
   end
 
   def downcase
@@ -21,28 +24,34 @@ class SymbolicString < SymbolicEmptinessValue
   end
 
   def [](*args)
-    if args.length > 2 then
-      ConflictAnalysis.meta_logger
+    if args.length > 2
+      ca.meta_logger
           .info "SymbolicString#[] called with #{args} on #{name}"
       return self
     end
     case args[0]
       when Fixnum
-        (self.is_empty==false and args[0]==0) ?
-            (SymbolicNonEmptyString.new "#{name}#{args[0]}") :
-            (nil_or_new_string args)
+        if self.is_empty==false and args[0]==0
+          var = tracer.var_for "#{name}#{args}"
+          SymbolicNonEmptyString.new var
+        else
+          nil_or_new_string args
+        end
       when Range
-        (self.is_empty == false and args[0].include? 0) ?
-            (SymbolicNonEmptyString.new "#{name}#{args[0]}") :
-            (nil_or_new_string args)
+        if self.is_empty == false and args[0].include? 0
+          var = tracer.var_for "#{name}#{args}"
+          SymbolicNonEmptyString.new var
+        else
+          nil_or_new_string args
+        end
       else
         nil_or_new_string args
     end
   end
 
   private
-  def nil_or_new_string args
-    ConflictAnalysis.amb
-        .choose (SymbolicString "#{name}[#{args}]", nil)
+  def nil_or_new_string(args)
+    var = tracer.var_for "#{name}#{args}"
+    amb.choose (SymbolicString.new var), nil
   end
 end

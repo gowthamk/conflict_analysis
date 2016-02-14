@@ -9,7 +9,8 @@ class SymbolicArray < SymbolicEmptinessValue
     #@logger.debug("#{@name}.map do |#{sym_value.name}|")
     x = yield sym_value
     #@logger.debug("end")
-    SymbolicArray.new("#{@name}.map",x,@logger)
+    var = tracer.var_for "#{self.name}.map"
+    SymbolicArray.new(var,x,self.is_empty)
   end
 
   def each
@@ -20,11 +21,13 @@ class SymbolicArray < SymbolicEmptinessValue
   end
 
   def first
-    ConflictAnalysis.amb.choose(nil, sym_value)
+    var = tracer.var_for "#{name}.first"
+    amb.choose(var, nil, sym_value)
   end
 
   def to_s
-    SymbolicNonEmptyString.new "#{name}.to_s"
+    var = tracer.var_for "#{name}.to_s"
+    SymbolicNonEmptyString.new var
   end
 
 end

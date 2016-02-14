@@ -7,6 +7,8 @@ class SymbolicEmptinessValue < SymbolicValue
   end
 
   def empty?
-    (is_empty.nil?)? ConflictAnalysis.amb.choose(false,true) : is_empty
+    (is_empty.nil?)?
+        (ca.choose(ca.tracer.var_for "#{name}.empty?",false,true)) :
+        is_empty
   end
 end

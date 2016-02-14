@@ -27,7 +27,7 @@ class SymbolicResult < SymbolicEmptinessValue
   end
 
   def [](idx)
-    puts "[] called on symbolic result"
+    ca.meta_logger.info '[] called on symbolic result'
     hash_rows[idx]
   end
 
