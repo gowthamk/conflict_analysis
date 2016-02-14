@@ -1,6 +1,6 @@
+require "active_record"
 require "conflict_analysis/version"
 require "exts/exts"
-require "active_record"
 require_relative '../amb/lib/amb'
 require "symbolics/symbolics"
 require "exts/database_adapter"
@@ -12,11 +12,19 @@ module ConflictAnalysis
   def self.amb
     @@amb
   end
+  def self.meta_logger=(logger)
+    @@meta_logger = logger
+  end
+  def self.meta_logger
+    @@meta_logger
+  end
   def self.init(config)
     my_logger = Logger.new('log/experiments.log')
     my_logger.level= Logger::DEBUG
     ActiveRecord::Base.logger = my_logger
     ActiveRecord::Base.establish_connection(config)
+    self.meta_logger = Logger.new('log/meta.log')
+    self.meta_logger.level = Logger::DEBUG
     dbname = config["adapter"]
     self.amb= Class.new {include Amb}.new
     # Note: ConnectionHandling module is "extend"ed in
@@ -38,7 +46,16 @@ module ConflictAnalysis
     end
     args = arg_names.zip(types)
     sym_args = args.map {|arg| self.value_of_class(arg[0], arg[1])}
-    proc.(*sym_args)
+    begin
+      proc.(*sym_args)
+    rescue Exception
+      sym_args.each do |arg|
+        if arg.respond_to? :errors then
+          puts arg.errors.full_messages
+        end
+      end
+      raise
+    end
   end
 
   private
@@ -56,7 +73,7 @@ module ConflictAnalysis
     elsif cls <= Fixnum
       SymbolicInteger.new name
     elsif cls <= String
-      SymbolicString.new name
+      SymbolicNonEmptyString.new name #We assume that user-provided strings are non-empty.
     elsif cls <= Boolean #Boolean is not a core class.
       # if its boolean, we choose a real value.
       self.amb.choose(true,false)
@@ -74,6 +91,11 @@ module ConflictAnalysis
       attr_name = "#{name.to_s}.#{attr}".to_sym
       attr_sym_val = self.value_of_class attr_name, (class_of_type column.type)
       arsym.send("#{attr}=", attr_sym_val)
+    end
+    # Quick and dirty fix for `has_secure_password`.
+    # TODO: Fixme
+    if arsym.respond_to? :password= then
+      arsym.password= SymbolicNonEmptyString.new "#{name}.password"
     end
     arsym
   end

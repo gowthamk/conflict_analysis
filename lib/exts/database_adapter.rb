@@ -11,8 +11,9 @@ module DatabaseAdapter
         stmt    = @connection.prepare(sql)
         cols = stmt.columns
         row = SymbolicRow.new("row",cols)
-        rows = SymbolicArray.new(name,row,@logger)
-        ActiveRecord::Result.new(cols, rows)
+        rows = SymbolicArray.new(name,row)
+        #ActiveRecord::Result.new(cols, rows)
+        SymbolicResult.new(cols, rows)
       end
     end
   end
@@ -35,6 +36,9 @@ module DatabaseAdapter
                               (DatabaseAdapter.instance_method :commit_db_transaction)
       define_singleton_method :rollback_db_transaction,
                               (DatabaseAdapter.instance_method :rollback_db_transaction)
+      define_singleton_method :real_type_cast, (self.method :type_cast)
+      define_singleton_method :type_cast,
+                              (DatabaseAdapter.instance_method :type_cast)
     end
     x
   end
@@ -53,4 +57,10 @@ module DatabaseAdapter
     log('rollback transaction') {}
     ConflictAnalysis.amb.failure
   end
+
+  def type_cast(value, column)
+    return real_type_cast(value, column) unless value.class <= SymbolicValue
+    value.to_s
+  end
+
 end
