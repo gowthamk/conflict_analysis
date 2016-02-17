@@ -1,4 +1,5 @@
 class SymbolicResult < SymbolicEmptinessValue
+  include SymbolicEnumerable
   attr_reader :columns, :rows, :column_types
 
   def initialize(columns, rows, column_types = {})
@@ -18,7 +19,7 @@ class SymbolicResult < SymbolicEmptinessValue
     hash_rows
   end
 
-  # TODO: Include Enumerate
+  # TODO: Include Enumerable
   # alias :map! :map
   # alias :collect! :map
 

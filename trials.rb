@@ -65,3 +65,40 @@ end
 
 b = ClassB.new 4
 puts "ClassA===b? #{ClassA===b}"
+
+
+# Can a non-nil/non-false object evaluate to
+# false in if-then-else?
+class Boolean
+  def inspect
+    puts "Boolean is being inspected"
+    false
+  end
+  def ==(other)
+    other.nil?
+  end
+  def ===(other)
+    other.nil?
+  end
+  def nil?
+    true
+  end
+  def empty?
+    true
+  end
+  def blank?
+    true
+  end
+end
+
+my_bool = Boolean.new
+
+b = ClassB.new my_bool
+
+if my_bool
+  puts "my_bool is true!"
+else
+  puts "my_bool is false"
+end
+
+# Apparently, never!

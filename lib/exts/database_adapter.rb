@@ -7,7 +7,7 @@ module DatabaseAdapter
       real_exec_query(sql,name,binds)
     else
       tracer = ConflictAnalysis.tracer
-      res_var = tracer.new_var_for(TraceAST::SQL.new(sql))
+      res_var = tracer.new_var_for(TraceAST::SQL.new(sql,binds))
       log(sql, name, binds) do
         stmt    = @connection.prepare(sql)
         cols = stmt.columns

@@ -1,3 +1,4 @@
+require_relative('symbolic_enumerable')
 require_relative('symbolic_value')
 require_relative('symbolic_emptiness_value')
 require_relative('symbolic_integer')

@@ -10,9 +10,9 @@ class SymbolicValue
   end
 
   def ==(other_val)
-    if SymbolicValue===other_val
-      return self.sym_equal(other_val)
-    end
+    return true if self.object_id == other_val.object_id
+    return self.sym_equal(other_val) if SymbolicValue===other_val
+
     if self.equal_vals.include?(other_val)
       return true
     elsif self.inequal_vals.include?(other_val)
@@ -29,21 +29,30 @@ class SymbolicValue
     is_eq
   end
 
+  # We cache the results of to_s and to_i. Since each process has
+  # its own copy of every SymbolicValue, and a process corresponds
+  # to a linear path in the trace, the cached function results are
+  # always well-formed (as per the trace program semantics) as long
+  # as the process is live.
   def to_s
     # For tracer, reveal who you really are.
     return self.ast.to_s if tracer.tracing?
     # Otherwise, maintain the bluff...
-    to_s_var = TraceAST::Var.new("to_s")
-    var = tracer.new_var_for(TraceAST::Dot.new(self.ast,to_s_var))
-    # Except for nil and empty string, to_s never
-    # returns an empty string.
-    SymbolicNonEmptyString.new var
+    @to_s ||= begin
+      to_s_var = TraceAST::Var.new("to_s")
+      var = tracer.new_var_for(TraceAST::Dot.new(self.ast,to_s_var))
+      # Except for nil and empty string, to_s never
+      # returns an empty string.
+      SymbolicNonEmptyString.new var
+    end
   end
 
   def to_i
-    to_i_var = TraceAST::Var.new("to_i")
-    var = tracer.new_var_for(TraceAST::Dot.new(self.ast,to_i_var))
-    SymbolicInteger.new var
+    @to_i ||= begin
+      to_i_var = TraceAST::Var.new("to_i")
+      var = tracer.new_var_for(TraceAST::Dot.new(self.ast,to_i_var))
+      SymbolicInteger.new var
+    end
   end
 
   def method_missing(name, *args, &blk)
@@ -71,8 +80,8 @@ class SymbolicValue
     ConflictAnalysis.tracer
   end
 
-  private
   def sym_equal(other_sym_val)
+    ca.meta_logger.info("Symbolic Comparision between #{self.ast} and #{other_sym_val.ast}")
     bool_op = TraceAST::BoolOp.new(self.ast,'==',other_sym_val)
     var = tracer.new_var_for(bool_op)
     return ca.amb.choose(var,true,false)

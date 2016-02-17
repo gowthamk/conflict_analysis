@@ -44,9 +44,39 @@ module TraceAST
   end
 
   # A SQL query is considered to be a single line expression
-  SQL = Struct.new("SQL",:query) do
+  class SQL
+    attr_accessor :query, :binds
+    def initialize(query,binds={})
+      self.query = query
+      self.binds = binds
+    end
     def to_s
-      "SQL (#{query.to_s})"
+      if self.binds.empty?
+        "SQL (#{render_query()})"
+      else
+        "SQL (#{render_query()}, #{render_binds()})"
+      end
+    end
+
+    private
+    def render_query()
+      self.query.to_s
+    end
+    def render_binds()
+      "  " + self.binds.map { |col,v|
+        render_bind(col, v)
+      }.inspect
+    end
+    def render_bind(column, value)
+      if column
+        if column.binary?
+          value = "<#{value.bytesize} bytes of binary data>"
+        end
+
+        [column.name, value.to_s]
+      else
+        [nil, value.to_s]
+      end
     end
   end
 
