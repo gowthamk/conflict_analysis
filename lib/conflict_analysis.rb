@@ -27,7 +27,13 @@ module ConflictAnalysis
   def self.trace(*args)
     self.tracer.trace(*args)
   end
-  def self.init(config)
+  def self.options=(options)
+    @@options = options
+  end
+  def self.options
+    @@options
+  end
+  def self.init(config,options={})
     my_logger = Logger.new('log/experiments.log')
     my_logger.level= Logger::DEBUG
     ActiveRecord::Base.logger = my_logger
@@ -35,6 +41,7 @@ module ConflictAnalysis
     self.meta_logger = Logger.new('log/meta.log')
     self.meta_logger.level = Logger::DEBUG
     self.tracer = Tracer.new('log/trace')
+    self.options=options
     dbname = config["adapter"]
     self.amb= Class.new {include Amb}.new
     # Note: ConnectionHandling module is "extend"ed in
