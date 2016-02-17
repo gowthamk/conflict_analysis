@@ -1,5 +1,5 @@
 class SymbolicNonEmptyString < SymbolicString
-  def initialize name
-    super name, false
+  def initialize ast
+    super ast, false
   end
 end

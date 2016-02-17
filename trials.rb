@@ -30,3 +30,38 @@ x.times do
   puts x
   x = x-1
 end
+
+
+ClassA = Struct.new(:field) do
+  def to_s
+    self.field
+  end
+end
+
+a = ClassA.new(2)
+
+case a
+  when ClassA
+    puts "#{a.to_s}"
+end
+
+class Hash
+  def to_s
+    "{#{self.to_a.map { |kv|
+      "#{kv[0].to_s} => #{kv[1].to_s}"
+    }.join ', '}}"
+  end
+end
+
+h = {:a => a, :b => ClassA.new(3)}
+
+puts "testing hash: #{h}"
+
+class ClassB < ClassA
+  def initialize(x)
+    super
+  end
+end
+
+b = ClassB.new 4
+puts "ClassA===b? #{ClassA===b}"

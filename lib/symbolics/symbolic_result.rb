@@ -2,7 +2,7 @@ class SymbolicResult < SymbolicEmptinessValue
   attr_reader :columns, :rows, :column_types
 
   def initialize(columns, rows, column_types = {})
-    super "SymbolicResult", nil # Result can always be empty. Hence nil.
+    super(TraceAST::Var.new("SymbolicResult"), nil) # Result can always be empty. Hence nil.
     @columns      = columns
     @rows         = rows
     @hash_rows    = nil

@@ -50,17 +50,17 @@ module ConflictAnalysis
   end
 
   def self.with_args_of_type(*types, proc)
-    arg_names = proc.parameters.map {|p| p[1]}
-    if !(arg_names.length == types.length) then
+    arg_vars = proc.parameters.map {|p| TraceAST::Var.new(p[1])}
+    if arg_vars.length != types.length
       fail "Invalid conflict spec"
     end
-    args = arg_names.zip(types)
+    args = arg_vars.zip(types)
     sym_args = args.map {|arg| self.value_of_class(arg[0], arg[1])}
     begin
       proc.(*sym_args)
     rescue Exception
       sym_args.each do |arg|
-        if arg.respond_to? :errors then
+        if arg.respond_to? :errors
           puts arg.errors.full_messages
         end
       end
@@ -69,51 +69,57 @@ module ConflictAnalysis
   end
 
   private
-  def self.value_of_class(name,cls)
-    if cls == NilClass then
+  def self.value_of_class(ast,cls)
+    if cls == NilClass
       nil
-    elsif cls == TrueClass then
+    elsif cls == TrueClass
       true
-    elsif cls == FalseClass then
+    elsif cls == FalseClass
       false
-    elsif !cls.respond_to? :<= then
-      SymbolicUntyped.new name
+    elsif !cls.respond_to? :<=
+      SymbolicUntyped.new ast
     elsif cls <= ActiveRecord::Base then
-      symbol_of_model(name,cls)
+      symbol_of_model(ast,cls)
     elsif cls <= Fixnum
-      SymbolicInteger.new name
+      SymbolicInteger.new ast
     elsif cls <= String
-      SymbolicNonEmptyString.new name #We assume that user-provided strings are non-empty.
+      SymbolicNonEmptyString.new ast #We assume that user-provided strings are non-empty.
     elsif cls <= Boolean #Boolean is not a core class.
       # if its boolean, we choose a real value.
-      self.amb.choose(name,true,false)
+      self.amb.choose(ast,true,false)
     else
-      SymbolicUntyped.new name
+      SymbolicUntyped.new ast
     end
   end
-  # @param name Symbol
+  # @param ast Symbol
   # @param cls Class
   # @return Symbol
-  def self.symbol_of_model(name,cls)
+  def self.symbol_of_model(ast,cls)
     arsym = cls.new
+    # ConflictAnalysis extends ActiveRecord::Base with
+    # attr_accessor :ast
+    #arsym.ast = ast
     column_types = arsym.instance_eval {|| @column_types}
     column_types.each do |attr,column|
-      attr_name = "#{name.to_s}.#{attr}".to_sym
-      sym_val_name = self.tracer.var_for attr_name
-      attr_sym_val = self.value_of_class sym_val_name, (class_of_type column.type)
+      attr_ast = TraceAST::Dot.new(ast,TraceAST::Var.new(attr.to_s))
+      sym_val_ast = self.tracer.new_var_for attr_ast
+      attr_sym_val = self.value_of_class(sym_val_ast,
+                                         (class_of_type column.type))
       arsym.send("#{attr}=", attr_sym_val)
     end
     # Quick and dirty fix for `has_secure_password`.
     # TODO: Fixme
-    if arsym.respond_to? :password= then
-      arsym.password= SymbolicNonEmptyString.new "#{name}.password"
+    if arsym.respond_to? :password=
+      ast = TraceAST::Dot.new(TraceAST::Var.new(ast.to_s),
+                              TraceAST::Var.new("password"))
+      arsym.password= SymbolicNonEmptyString.new(ast)
     end
     arsym
   end
 
   # @param type Symbol
   # @return Class
-  def self.class_of_type type
+  def self.class_of_type(type)
     case type
       when :integer
         Fixnum

@@ -6,12 +6,14 @@ module DatabaseAdapter
     if name == "SCHEMA" then
       real_exec_query(sql,name,binds)
     else
-      puts "SQL: #{sql}"
+      tracer = ConflictAnalysis.tracer
+      res_var = tracer.new_var_for("SQL (#{sql})")
       log(sql, name, binds) do
         stmt    = @connection.prepare(sql)
         cols = stmt.columns
-        row = SymbolicRow.new("row",cols)
-        rows = SymbolicArray.new(name,row)
+        row_var = tracer.new_var
+        row = SymbolicRow.new(row_var,cols)
+        rows = SymbolicArray.new(res_var,row)
         #ActiveRecord::Result.new(cols, rows)
         SymbolicResult.new(cols, rows)
       end
@@ -45,16 +47,19 @@ module DatabaseAdapter
 
   def begin_db_transaction
     log('begin transaction') {}
+    ConflictAnalysis.trace(TraceAST::SQL.new("begin transaction"))
   end
 
   def commit_db_transaction
     #fail "Test error"
     log('commit transaction') {}
+    ConflictAnalysis.trace(TraceAST::SQL.new("commit transaction"))
     ConflictAnalysis.amb.failure
   end
 
   def rollback_db_transaction
     log('rollback transaction') {}
+    ConflictAnalysis.trace(TraceAST::SQL.new("rollback transaction"))
     ConflictAnalysis.amb.failure
   end
 

@@ -24,7 +24,8 @@ module ActiveModel
           attr_reader :password, :password_confirmation
           def password=(unencrypted_password)
             @password = unencrypted_password
-            self.password_digest = SymbolicString.new "#{name}.password_digest"
+            #ast = TraceAST::Dot.new(self.ast,TraceAST::Var.new("password_digest"))
+            self.password_digest = SymbolicString.new(TraceAST::Var.new("password_digest"))
           end
 
           def password_confirmation=(unencrypted_password)

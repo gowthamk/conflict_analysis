@@ -1,6 +1,7 @@
 module ActiveRecord
   class Base
-    include ActiveModel::SecurePassword
+    #attr_accessor :ast
+    #include ActiveModel::SecurePassword
     # ActiveRecord::Base includes ActiveModel::SecurePassword.
     # I tried to override ActiveModel::SecurePassword, but it didn't
     # work (See secure_password.rb for explanation).
