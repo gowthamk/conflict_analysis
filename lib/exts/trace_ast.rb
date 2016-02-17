@@ -46,7 +46,7 @@ module TraceAST
   # A SQL query is considered to be a single line expression
   SQL = Struct.new("SQL",:query) do
     def to_s
-      query.to_s
+      "SQL (#{query.to_s})"
     end
   end
 

@@ -47,6 +47,8 @@ class Tracer < Logger
     TraceAST::Var.new(v)
   end
 
+  # Caution: Be careful with the tracing flag if you are
+  # making this method recursive.
   def trace(ast)
     self.tracing
     case ast
@@ -69,12 +71,19 @@ class Tracer < Logger
     self.not_tracing
   end
 
-  def mark_indent
-    self.begin_indent = self.indent
+  # mark_indent_for_if marks the begin indent for a process executing
+  # an `if` TraceAST. It is the indent until which the process must
+  # `end` before exiting.
+  # If a process executes at least one `if` TraceAST, then it
+  # should `end` with one less than the number of indents it has
+  # created; an `else` TraceAST will end the last indent.
+  def mark_indent_for_if
+    self.begin_indent = self.indent + 1
   end
 
+  # end_all restores the indent until the begin indent.
   def end_all
-    (self.indent - self.begin_indent - 1).times do
+    (self.indent - self.begin_indent).times do
       self.indent = self.indent - 1
       self.info("#{indent_str}#{TraceAST::End.new().to_s}")
     end
