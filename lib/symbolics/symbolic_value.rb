@@ -3,7 +3,7 @@ class SymbolicValue
   attr_accessor :ast
   attr_reader :equal_vals, :inequal_vals
   def initialize(ast)
-    fail 'SymbolicValue needs a TraceAST' unless TraceAST.a_si(ast)
+    fail 'SymbolicValue needs a TraceAST' unless TraceAST.a_si?(ast)
     @ast = ast
     @equal_vals = []
     @inequal_vals = []
@@ -29,6 +29,10 @@ class SymbolicValue
     is_eq
   end
 
+  # We assume that inspect is only for meta purpose
+  def inspect
+    self.ast.to_s
+  end
   # We cache the results of to_s and to_i. Since each process has
   # its own copy of every SymbolicValue, and a process corresponds
   # to a linear path in the trace, the cached function results are
@@ -55,9 +59,29 @@ class SymbolicValue
     end
   end
 
+  def hash()
+    super
+    @hash ||= begin
+      hash_var = TraceAST::Var.new("hash")
+      var = tracer.new_var_for(TraceAST::Dot.new(self.ast,hash_var))
+      SymbolicInteger.new var
+    end
+  end
+
+  def eql?(other)
+    if other.is_a? SymbolicValue and self.hash.ast.to_s == other.hash.ast.to_s
+      return true
+    end
+    bool_op = TraceAST::BoolOp.new(self.ast,'eql?',regex)
+    var = tracer.new_var_for(bool_op)
+    amb.choose(var, true,false)
+  end
+
+
   def method_missing(name, *args, &blk)
     ca.meta_logger
         .info "#{self.class}##{name} missing. Receiver: #{self.ast.to_s}"
+    super
   end
 
   def respond_to?(*args)
@@ -65,6 +89,10 @@ class SymbolicValue
     ca.meta_logger
         .info "#{self.class}#respond_to?(#{args}). Receiver #{self.ast.to_s}"
     false
+  end
+
+  def <=>(other)
+    ca.meta_logger.info "#{self.ast.to_s} <=> with #{other.to_s}"
   end
 
   protected

@@ -52,7 +52,7 @@ class Tracer < Logger
   def trace(ast)
     self.tracing
     case ast
-      when TraceAST::If, TraceAST::Else, TraceAST::Map
+      when TraceAST::Def, TraceAST::If, TraceAST::Else, TraceAST::Map
         self.info("#{self.indent_str}#{ast.to_s}")
         self.indent=self.indent+1
       when TraceAST::End
@@ -62,10 +62,11 @@ class Tracer < Logger
         self.info("#{self.indent_str}#{ast.to_s}")
         self.indent=self.indent+1 if ast.rhs.is_a? TraceAST::Map
       else
-        ast_str = ast.to_s
-        self.info("#{self.indent_str}#{ast_str}")
+        istr = self.indent_str
+        indented_ast_str = istr + (ast.to_s.gsub(/\n/,"\n#{istr}"))
+        self.info(indented_ast_str)
     end
-    if !TraceAST.a_si(ast)
+    if !TraceAST.a_si?(ast)
       ConflictAnalysis.meta_logger.info("Unknown TraceAST: #{ast.to_s}")
     end
     self.not_tracing

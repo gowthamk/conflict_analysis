@@ -1,8 +1,8 @@
 require "active_record"
 require "conflict_analysis/version"
+require "symbolics/symbolics"
 require "exts/exts"
 require_relative '../amb/lib/amb'
-require "symbolics/symbolics"
 require "exts/database_adapter"
 
 module ConflictAnalysis
@@ -73,6 +73,18 @@ module ConflictAnalysis
       end
       raise
     end
+  end
+
+  def self.analyze(hdr)
+    Process.fork do
+      at_exit do
+        ConflictAnalysis.tracer.end_all
+      end
+      self.tracer.trace(TraceAST::Def.new(hdr))
+      yield
+      self.tracer.trace(TraceAST::End.new)
+    end
+    Process.wait
   end
 
   private

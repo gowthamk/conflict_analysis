@@ -102,3 +102,5 @@ else
 end
 
 # Apparently, never!
+
+puts ("  hello\nworld".gsub(/\n/,"\n  "))

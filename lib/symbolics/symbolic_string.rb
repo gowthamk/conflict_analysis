@@ -29,6 +29,10 @@ class SymbolicString < SymbolicEmptinessValue
     self
   end
 
+  def gsub(*args)
+    self
+  end
+
   def [](*args)
     if args.length > 2
       ca.meta_logger

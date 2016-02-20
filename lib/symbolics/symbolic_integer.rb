@@ -25,6 +25,9 @@ class SymbolicInteger < SymbolicValue
     var = tracer.new_var_for(bool_op)
     amb.choose(var,true,false)
   end
+  def to_int(*args)
+    self
+  end
 =begin
   # SymbolicValue already provides this method
   def ==(other)

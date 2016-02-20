@@ -41,6 +41,8 @@ module DatabaseAdapter
       define_singleton_method :real_type_cast, (self.method :type_cast)
       define_singleton_method :type_cast,
                               (DatabaseAdapter.instance_method :type_cast)
+      define_singleton_method :real_quote, (self.method :quote)
+      define_singleton_method :quote, (DatabaseAdapter.instance_method :quote)
     end
     x
   end
@@ -64,8 +66,19 @@ module DatabaseAdapter
   end
 
   def type_cast(value, column)
-    return real_type_cast(value, column) unless value.class <= SymbolicValue
-    value.to_s
+    return real_type_cast(value, column) unless value.is_a? SymbolicValue
+    value.ast.to_s
+  end
+
+  def quote(value, column=nil)
+    if value.is_a? SymbolicValue then
+      q = "'#{quote_string(value.ast.to_s)}'"
+    elsif TraceAST.a_si? value
+      q = "'#{quote_string(value.to_s)}'"
+    else
+      q = real_quote(value, column)
+    end
+    q
   end
 
 end

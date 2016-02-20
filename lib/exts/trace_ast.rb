@@ -4,6 +4,12 @@ module TraceAST
   # a single line of trace.
 
   # Variable fits on a single line
+  Def = Struct.new("Def", :signature) do
+    def to_s
+      "def #{self.signature.to_s}"
+    end
+  end
+
   Var = Struct.new("Var",:name) do
     def to_s
       "#{self.name.to_s}"
@@ -94,9 +100,9 @@ module TraceAST
     end
   end
 
-  def self.a_si(ast)
+  def self.a_si?(ast)
     case ast
-      when Var, Dot, BoolOp, If, Else, End, SQL, Assignment, Map
+      when Def, Var, Dot, BoolOp, If, Else, End, SQL, Assignment, Map
         true
       else
         false
