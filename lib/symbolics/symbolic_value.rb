@@ -1,7 +1,24 @@
 # The base class of all symbolic values
 class SymbolicValue
+
+  def self.to_ast(val)
+    if val.is_a? SymbolicValue
+      val.ast
+    # The below elsif doesn't work because there are some inane
+    # implementations of map (Arel::Attributes::Attribute, for e.g.)
+    #elsif val.respond_to? :map
+    elsif val.is_a? Array
+      val.map {|vv| SymbolicValue.to_ast(vv)}
+    else
+      ConflictAnalysis.meta_logger
+          .info("SymbolicValue#to_ast called with #{val.to_s}")
+      val
+    end
+  end
+
   attr_accessor :ast
   attr_reader :equal_vals, :inequal_vals
+
   def initialize(ast)
     fail 'SymbolicValue needs a TraceAST' unless TraceAST.a_si?(ast)
     @ast = ast
@@ -39,9 +56,13 @@ class SymbolicValue
   # always well-formed (as per the trace program semantics) as long
   # as the process is live.
   def to_s
-    # For tracer, reveal who you really are.
-    return self.ast.to_s if tracer.tracing?
-    # Otherwise, maintain the bluff...
+    # Ideally, SymbolicValues shouldn't escape into trace world, and
+    # we shouldn't require this if condition. However, they do escape.
+    # This is because of the symbolic values being stored in concrete
+    # hashes and arrays in SymbolicResult#each or SymbolicArray#map.
+    if tracer.tracing?
+      return self.ast.to_s
+    end
     @to_s ||= begin
       to_s_var = TraceAST::Var.new("to_s")
       var = tracer.new_var_for(TraceAST::Dot.new(self.ast,to_s_var))
@@ -60,7 +81,6 @@ class SymbolicValue
   end
 
   def hash()
-    super
     @hash ||= begin
       hash_var = TraceAST::Var.new("hash")
       var = tracer.new_var_for(TraceAST::Dot.new(self.ast,hash_var))

@@ -1,11 +1,14 @@
 module DatabaseAdapter
+  # exec_query is where all queries come to get dispatched to the DB.
+  # Along with Arel::Nodes::Node constructors, exec_query is also
+  # part of the Symbolic-Trace boundary, where SymbolicValues get
+  # converted to TraceASTs. It plays this role for INSERT queries,
+  # where values to be inserted come packaged as binds hash.
   def exec_query(sql, name=nil, binds=[])
-    if !self.respond_to? :real_exec_query then
-      fail "MonkeyPatching error: real_exec_query is not defined!"
-    end
     if name == "SCHEMA" then
       real_exec_query(sql,name,binds)
     else
+      binds = SymbolicValue.to_ast(binds)
       tracer = ConflictAnalysis.tracer
       res_var = tracer.new_var_for(TraceAST::SQL.new(sql,binds))
       log(sql, name, binds) do
@@ -53,7 +56,6 @@ module DatabaseAdapter
   end
 
   def commit_db_transaction
-    #fail "Test error"
     log('commit transaction') {}
     ConflictAnalysis.trace(TraceAST::SQL.new("commit transaction"))
     ConflictAnalysis.amb.failure
@@ -67,7 +69,7 @@ module DatabaseAdapter
 
   def type_cast(value, column)
     return real_type_cast(value, column) unless value.is_a? SymbolicValue
-    value.ast.to_s
+    value#.ast.to_s
   end
 
   def quote(value, column=nil)

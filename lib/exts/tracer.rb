@@ -67,6 +67,8 @@ class Tracer < Logger
         self.info(indented_ast_str)
     end
     if !TraceAST.a_si?(ast)
+      # We come here mostly because of Hashes and Arrays storing
+      # SymbolicValues.
       ConflictAnalysis.meta_logger.info("Unknown TraceAST: #{ast.to_s}")
     end
     self.not_tracing

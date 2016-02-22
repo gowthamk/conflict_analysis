@@ -61,6 +61,9 @@ class ClassB < ClassA
   def initialize(x)
     super
   end
+  def self.a_meth
+    "a_meth"
+  end
 end
 
 b = ClassB.new 4
@@ -104,3 +107,4 @@ end
 # Apparently, never!
 
 puts ("  hello\nworld".gsub(/\n/,"\n  "))
+puts ("#{ClassB.a_meth}")

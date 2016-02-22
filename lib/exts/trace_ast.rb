@@ -3,6 +3,10 @@ module TraceAST
   # TraceAST represents a partial expression that fits inside
   # a single line of trace.
 
+  # Note: If you rewrite the following Struct definitions
+  # to stand-alone classes, then you'll have to make the
+  # corresponding change in Arel::Visitors::ToSql.method_missing.
+
   # Variable fits on a single line
   Def = Struct.new("Def", :signature) do
     def to_s

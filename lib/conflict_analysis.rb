@@ -65,13 +65,13 @@ module ConflictAnalysis
     sym_args = args.map {|arg| self.value_of_class(arg[0], arg[1])}
     begin
       proc.(*sym_args)
-    rescue Exception
+    rescue Exception => error
       sym_args.each do |arg|
         if arg.respond_to? :errors
           puts arg.errors.full_messages
         end
       end
-      raise
+      meta_logger.info(error.message)
     end
   end
 

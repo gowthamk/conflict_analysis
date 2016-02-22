@@ -6,7 +6,7 @@ class SymbolicArray < SymbolicEmptinessValue
   end
 
   def map
-    map_ast = TraceAST::Map.new(self.ast,self.sym_value)
+    map_ast = TraceAST::Map.new(self.ast,self.sym_value.ast)
     res_ast = tracer.new_var_for(map_ast)
     res_val = yield self.sym_value
     tracer.trace(res_val)
