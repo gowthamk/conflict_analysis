@@ -108,3 +108,11 @@ end
 
 puts ("  hello\nworld".gsub(/\n/,"\n  "))
 puts ("#{ClassB.a_meth}")
+
+class NilClass
+  def to_s
+    "nil"
+  end
+end
+
+puts "Nil is #{nil}"

@@ -4,10 +4,16 @@ class Tracer < Logger
 
   def tracing
     @tracing = true
+    NilClass.class_eval do
+      alias_method :to_s, :to_nil_s
+    end
   end
 
   def not_tracing
     @tracing = false
+    NilClass.class_eval do
+      alias_method :to_s, :to_empty_s
+    end
   end
 
   def tracing?

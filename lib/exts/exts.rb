@@ -1,4 +1,6 @@
 require_relative 'boolean'
+require_relative 'fixnum'
+require_relative 'nil_class'
 require_relative 'hash'
 require_relative 'database_adapter'
 require_relative 'logger'
